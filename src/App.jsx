@@ -448,40 +448,17 @@ async function fetchNearestWaterBody(lat, lon) {
 //  IDENTIFICATION IA — Claude Vision via API Anthropic (artifact)
 // ═══════════════════════════════════════════════════════════════════════
 async function identifyFishWithClaude(base64, mediaType) {
-  // Clé : variable Vite en production, injectée automatiquement dans l'artifact Claude
-  const apiKey = (typeof import !== "undefined" && typeof import.meta !== "undefined" && import.meta?.env?.VITE_ANTHROPIC_KEY) || "";
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "anthropic-version":"2023-06-01",
-      "anthropic-dangerous-direct-browser-access":"true",
-      ...(apiKey ? {"x-api-key": apiKey} : {}),
-    },
-    body: JSON.stringify({
-      model:"claude-sonnet-4-20250514",
-      max_tokens:900,
-      messages:[{
-        role:"user",
-        content:[
-          {type:"image", source:{type:"base64", media_type:mediaType, data:base64}},
-          {type:"text",  text:`Tu es un expert en ichtyologie et en pêche sportive au Québec, Canada.
-Analyse cette photo et identifie le poisson.
-Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans texte avant ni après) :
-{"found":true,"name":"nom français","nameEn":"english name","confidence":"élevée","weight_estimate":"X.X kg","length_estimate":"XX cm","description":"2 phrases sur ce poisson au Québec","regulation":"règlement MRNF Québec","fun_fact":"fait amusant"}
-Si aucun poisson visible, réponds : {"found":false,"name":"","confidence":"faible","description":"Aucun poisson identifiable sur cette image."}`}
-        ]
-      }]
-    })
+  // Appel sécurisé via Netlify Function — la clé API reste côté serveur
+  const resp = await fetch("/.netlify/functions/identify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ base64, mediaType })
   });
   if (!resp.ok) {
     const err = await resp.text();
-    throw new Error(`API ${resp.status}: ${err.slice(0,100)}`);
+    throw new Error(`Erreur serveur ${resp.status}: ${err.slice(0,100)}`);
   }
-  const data = await resp.json();
-  const text = data.content?.find(b=>b.type==="text")?.text ?? "";
-  const clean = text.replace(/```json|```/g,"").trim();
-  return JSON.parse(clean);
+  return await resp.json();
 }
 
 // ═══════════════════════════════════════════════════════════════════════
