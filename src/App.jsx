@@ -148,7 +148,7 @@ const FISH_DB = [
   },
   {
     id:5, name:"Truite mouchetée", emoji:"🐟", color:"#e06c75",
-    habitats:["rivière","lac"],
+    habitats:["rivière","lac","ruisseau"],
     months:[4,5,6,9,10,11],
     bestWeather:["cloudy","overcast"], okWeather:["clear","rain"],
     windMin:0, windMax:15, minAirTemp:5, maxAirTemp:20,
@@ -236,7 +236,7 @@ const FISH_DB = [
   },
   {
     id:9, name:"Omble de fontaine", emoji:"🐟", color:"#56b6c2",
-    habitats:["rivière","lac"],
+    habitats:["rivière","lac","ruisseau"],
     months:[4,5,6,7,8,9,10],
     bestWeather:["cloudy"], okWeather:["clear","overcast"],
     windMin:0, windMax:15, minAirTemp:5, maxAirTemp:20,
@@ -302,7 +302,7 @@ const FISH_DB = [
   },
   {
     id:12, name:"Barbotte brune", emoji:"🐟", color:"#8b6f47",
-    habitats:["rivière","lac","fleuve","canal","étang"],
+    habitats:["rivière","lac","fleuve","canal","étang","marais","port"],
     months:[5,6,7,8,9],
     bestWeather:["overcast","rain"], okWeather:["cloudy","clear"],
     windMin:0, windMax:50, minAirTemp:18, maxAirTemp:32,
@@ -331,12 +331,15 @@ const MONTHS_FR   = ["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Août","Sep",
 const MONTHS_FULL = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 
 const WATER_TYPES = [
-  {id:"lac",      label:"Lac",     icon:"🏞️"},
-  {id:"rivière",  label:"Rivière", icon:"🌊"},
-  {id:"fleuve",   label:"Fleuve",  icon:"🛶"},
-  {id:"canal",    label:"Canal",   icon:"⚓"},
-  {id:"étang",    label:"Étang",   icon:"🌿"},
-  {id:"marais",   label:"Marais",  icon:"🐸"},
+  {id:"lac",        label:"Lac",        icon:"🏞️"},
+  {id:"rivière",    label:"Rivière",    icon:"🌊"},
+  {id:"fleuve",     label:"Fleuve",     icon:"🛶"},
+  {id:"canal",      label:"Canal",      icon:"⚓"},
+  {id:"étang",      label:"Étang",      icon:"🌿"},
+  {id:"marais",     label:"Marais",     icon:"🐸"},
+  {id:"ruisseau",   label:"Ruisseau",   icon:"〰️"},
+  {id:"tourbière",  label:"Tourbière",  icon:"🍂"},
+  {id:"port",       label:"Port/Baie",  icon:"⛵"},
 ];
 
 const DEPTH_OPTIONS    = [{id:"surface",label:"Surface",icon:"🌊"},{id:"peu profond",label:"Peu prof.",icon:"📏"},{id:"milieu",label:"Milieu",icon:"🎯"},{id:"fond",label:"Fond",icon:"⬇️"}];
@@ -382,6 +385,21 @@ function getMoonPhase(date = new Date()) {
 // ═══════════════════════════════════════════════════════════════════════
 //  API HELPERS
 // ═══════════════════════════════════════════════════════════════════════
+
+// Profils par défaut selon le type de plan d'eau détecté
+// L'utilisateur peut toujours modifier manuellement après
+const WATER_PROFILES = {
+  canal:      { current:"lent",    depth:"fond",        vegetation:["fond limoneux","sable"] },
+  fleuve:     { current:"moyen",   depth:"fond",        vegetation:["fond limoneux","sable","bois coulé"] },
+  rivière:    { current:"moyen",   depth:"peu profond", vegetation:["rochers","rapides","bois coulé"] },
+  lac:        { current:"nul",     depth:"milieu",      vegetation:["herbiers","bois coulé"] },
+  étang:      { current:"nul",     depth:"peu profond", vegetation:["herbiers","nénuphars"] },
+  marais:     { current:"nul",     depth:"surface",     vegetation:["herbiers","nénuphars"] },
+  ruisseau:   { current:"rapide",  depth:"surface",     vegetation:["rochers","rapides"] },
+  tourbière:  { current:"nul",     depth:"peu profond", vegetation:["herbiers","fond limoneux"] },
+  port:       { current:"lent",    depth:"fond",        vegetation:["fond limoneux","sable"] },
+};
+
 async function fetchWeather(lat, lon) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,weathercode,precipitation,surface_pressure&timezone=America%2FToronto`;
   const r = await fetch(url);
@@ -422,25 +440,76 @@ async function geocodeAddress(query) {
 }
 
 async function fetchNearestWaterBody(lat, lon) {
-  const query = `[out:json][timeout:12];(way["natural"="water"]["water"!="wastewater"](around:6000,${lat},${lon});relation["natural"="water"](around:6000,${lat},${lon});way["waterway"~"^(river|stream|canal)$"](around:4000,${lat},${lon}););out tags center 8;`;
+  // Requête élargie : on demande plus de résultats et on inclut les canaux nommés
+  // "out center" retourne le centre géométrique de chaque élément pour calculer la distance
+  const query = `
+    [out:json][timeout:15];
+    (
+      way["waterway"="canal"](around:8000,${lat},${lon});
+      way["waterway"="river"](around:6000,${lat},${lon});
+      way["waterway"="stream"](around:4000,${lat},${lon});
+      way["waterway"="drain"](around:2000,${lat},${lon});
+      way["natural"="water"]["water"!="wastewater"](around:6000,${lat},${lon});
+      relation["natural"="water"](around:6000,${lat},${lon});
+      way["natural"="wetland"](around:4000,${lat},${lon});
+      relation["natural"="wetland"](around:4000,${lat},${lon});
+      way["harbour"="yes"](around:3000,${lat},${lon});
+      node["natural"="spring"](around:2000,${lat},${lon});
+    );
+    out tags center 30;
+  `;
   try {
-    const r = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`, {signal:AbortSignal.timeout(10000)});
+    const r = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`, {signal:AbortSignal.timeout(12000)});
     if (!r.ok) return null;
     const d = await r.json();
     if (!d.elements?.length) return null;
+
     const scored = d.elements.map(el => {
-      const t = el.tags||{};
-      const name = t.name||t["name:fr"]||null;
-      let type = "lac";
-      if (t.waterway==="river") type="fleuve";
-      else if (t.waterway==="canal") type="canal";
-      else if (t.waterway==="stream") type="rivière";
-      else if (t.water==="river") type="fleuve";
-      else if (t.water==="pond"||t.water==="reservoir") type="étang";
-      return {name, type, score:(name?12:0)+(el.tags?.water?3:0)};
+      const t = el.tags || {};
+      const name = t.name || t["name:fr"] || t["name:en"] || null;
+
+      // Déterminer le type depuis les tags OSM
+      let type = "lac"; // défaut
+      if      (t.waterway === "canal")                              type = "canal";
+      else if (t.waterway === "river")                              type = "fleuve";
+      else if (t.waterway === "stream" || t.waterway === "drain")   type = "ruisseau";
+      else if (t.water === "river")                                 type = "fleuve";
+      else if (t.water === "canal")                                 type = "canal";
+      else if (t.water === "pond")                                  type = "étang";
+      else if (t.water === "lake")                                  type = "lac";
+      else if (t.water === "bog" || t.natural === "wetland" ||
+               t.wetland === "bog" || t.wetland === "fen")          type = "tourbière";
+      else if (t.water === "marsh" || t.wetland === "marsh" ||
+               t.natural === "marsh")                               type = "marais";
+      else if (t.harbour === "yes" || t.water === "harbour")        type = "port";
+
+      // Calculer la distance approximative depuis le centre de l'élément
+      let dist = 9999;
+      const center = el.center;
+      if (center) {
+        const dlat = center.lat - lat;
+        const dlon = center.lon - lon;
+        dist = Math.sqrt(dlat*dlat + dlon*dlon) * 111; // km approx
+      }
+
+      // Score : on favorise fortement les éléments proches et nommés
+      // Un canal/rivière nommé à 500m bat un lac nommé à 3km
+      let score = 0;
+      if (name) score += 20;                    // a un nom
+      if (dist < 0.3) score += 50;              // très proche < 300m
+      else if (dist < 1) score += 30;           // proche < 1km
+      else if (dist < 2) score += 15;           // < 2km
+      else if (dist < 4) score += 5;            // < 4km
+      // Bonus canaux et rivières (souvent plus pertinents que les petits étangs)
+      if (type === "canal")   score += 10;
+      if (type === "fleuve")  score += 8;
+      if (type === "rivière") score += 6;
+
+      return { name, type, score, dist: dist.toFixed(1) };
     });
-    scored.sort((a,b)=>b.score-a.score);
-    return scored[0]??null;
+
+    scored.sort((a,b) => b.score - a.score);
+    return scored[0] ?? null;
   } catch { return null; }
 }
 
@@ -914,7 +983,18 @@ function SearchPage({onResults}) {
     const [wtr,wb] = await Promise.allSettled([fetchWeather(lat,lon), fetchNearestWaterBody(lat,lon)]);
     if (wtr.status==="fulfilled") { setWeather(wtr.value); setWeatherState("done"); }
     else setWeatherState("error");
-    if (wb.status==="fulfilled"&&wb.value) { setNearestWater(wb.value); setWaterState("done"); setHabitat(prev=>prev??wb.value.type); }
+    if (wb.status==="fulfilled"&&wb.value) {
+      setNearestWater(wb.value);
+      setWaterState("done");
+      const profile = WATER_PROFILES[wb.value.type];
+      // Pré-remplit seulement si l'utilisateur n'a pas déjà choisi manuellement
+      setHabitat(prev => prev ?? wb.value.type);
+      if (profile) {
+        setCurrent(prev  => prev ?? profile.current);
+        setDepth(prev    => prev ?? profile.depth);
+        setVegetation(prev => prev.length > 0 ? prev : profile.vegetation);
+      }
+    }
     else setWaterState("notfound");
   }
 
@@ -1029,7 +1109,10 @@ function SearchPage({onResults}) {
             <span style={{fontSize:"20px"}}>{WATER_TYPES.find(w=>w.id===nearestWater.type)?.icon||"🌊"}</span>
             <div style={{flex:1}}>
               <div style={{fontSize:"13px",fontWeight:700,color:"#00d4aa"}}>{nearestWater.type.charAt(0).toUpperCase()+nearestWater.type.slice(1)} détecté</div>
-              {nearestWater.name&&<div style={{fontSize:"11px",color:"#8899bb"}}>{nearestWater.name}</div>}
+              <div style={{fontSize:"11px",color:"#8899bb"}}>
+                {nearestWater.name && <span>{nearestWater.name}{nearestWater.dist ? ` · ${nearestWater.dist} km` : ""} · </span>}
+                <span style={{color:"#f7b731"}}>Type, courant, profondeur pré-remplis ✦</span>
+              </div>
             </div>
             <span style={{fontSize:"10px",padding:"2px 8px",borderRadius:"999px",background:"rgba(0,212,170,0.2)",color:"#00d4aa"}}>Auto</span>
           </div>
