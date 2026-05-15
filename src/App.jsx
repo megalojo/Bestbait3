@@ -4,54 +4,53 @@ import { useState, useRef, useEffect } from "react";
 //  PHOTOS APPÂTS — Unsplash (URLs directes, sans clé)
 // ═══════════════════════════════════════════════════════════════════════
 const BAIT_PHOTOS = {
-  "Jig + ver de terre":      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=200&q=80",
-  "Cuillère tournante":      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&q=80",
-  "Poisson nageur Rapala":   "https://images.unsplash.com/photo-1612178991541-b48cc8e92a4d?w=200&q=80",
-  "Tube jig":                "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=200&q=80",
-  "Spinnerbait":             "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&q=80",
-  "Poisson nageur 15cm":     "https://images.unsplash.com/photo-1612178991541-b48cc8e92a4d?w=200&q=80",
-  "Leurre souple shad":      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=200&q=80",
-  "Vif (crapet/perche)":     "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&q=80",
-  "Topwater (Popper)":       "https://images.unsplash.com/photo-1612178991541-b48cc8e92a4d?w=200&q=80",
-  "Worm texan 7\"":          "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=200&q=80",
-  "Crankbait":               "https://images.unsplash.com/photo-1612178991541-b48cc8e92a4d?w=200&q=80",
-  "Jig à pinceau":           "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=200&q=80",
-  "Dropshot finesse":        "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&q=80",
-  "Ned rig (TRD)":           "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=200&q=80",
-  "Tube jig 3-4\"":          "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=200&q=80",
-  "Swimbait":                "https://images.unsplash.com/photo-1612178991541-b48cc8e92a4d?w=200&q=80",
-  "Mouche sèche":            "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80",
-  "Cuillère ondulante":      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&q=80",
-  "Ver de terre naturel":    "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&q=80",
-  "Nymphe (pheasant)":       "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80",
-  "Kastmaster (cuillère)":   "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&q=80",
-  "Spinner Mepps #3":        "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&q=80",
-  "Œufs de saumon (roe)":   "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&q=80",
-  "Nymphe beadhead":         "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80",
-  "Grand bucktail 8\"+":     "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80",
-  "Glide bait (Dawg)":       "https://images.unsplash.com/photo-1612178991541-b48cc8e92a4d?w=200&q=80",
-  "Gros poisson nageur":     "https://images.unsplash.com/photo-1612178991541-b48cc8e92a4d?w=200&q=80",
-  "Jerkbait XXL":            "https://images.unsplash.com/photo-1612178991541-b48cc8e92a4d?w=200&q=80",
-  "Petit jig + asticot":     "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=200&q=80",
-  "Minnow vivant":           "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&q=80",
-  "Ver de terre":            "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&q=80",
-  "Cuillère clignotante":    "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&q=80",
-  "Mouche sèche (elk hair)": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80",
-  "Nymphe de fond":          "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80",
-  "Cuillère légère 2-3g":    "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&q=80",
-  "Ver de vase":             "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&q=80",
-  "Mouche noyée Butterfly":  "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80",
-  "Spey fly (Intruder)":     "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80",
-  "Cuillère saumon #5":      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=200&q=80",
-  "Devon minnow":            "https://images.unsplash.com/photo-1612178991541-b48cc8e92a4d?w=200&q=80",
-  "Ver de terre (petit)":    "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&q=80",
-  "Petit popper":            "https://images.unsplash.com/photo-1612178991541-b48cc8e92a4d?w=200&q=80",
-  "Mouche sèche":            "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80",
-  "Libellule artificielle":  "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&q=80",
-  "Ver de terre (gros)":     "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&q=80",
-  "Foie de poulet":          "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&q=80",
-  "Asticot en grappe":       "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=200&q=80",
-  "Boilette maison":         "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=200&q=80",
+  "Jig + ver de terre": "https://image.pollinations.ai/prompt/fishing%20jig%20hook%20with%20earthworm%20natural%20bait%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Tube jig": "https://image.pollinations.ai/prompt/soft%20plastic%20tube%20jig%20fishing%20lure%20green%20brown%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Tube jig 3-4\"": "https://image.pollinations.ai/prompt/small%20soft%20plastic%20tube%20jig%20fishing%20lure%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Petit jig + asticot": "https://image.pollinations.ai/prompt/tiny%20ice%20fishing%20jig%20with%20maggot%20white%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Jig à pinceau": "https://image.pollinations.ai/prompt/bucktail%20jig%20fishing%20lure%20brown%20hair%20hook%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Ned rig (TRD)": "https://image.pollinations.ai/prompt/ned%20rig%20TRD%20soft%20plastic%20mushroom%20head%20jig%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Dropshot finesse": "https://image.pollinations.ai/prompt/dropshot%20rig%20finesse%20worm%20fishing%20tackle%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Cuillère tournante": "https://image.pollinations.ai/prompt/silver%20spinning%20spoon%20fishing%20lure%20blade%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Cuillère ondulante": "https://image.pollinations.ai/prompt/wobbling%20spoon%20fishing%20lure%20silver%20gold%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Kastmaster (cuillère)": "https://image.pollinations.ai/prompt/kastmaster%20spoon%20fishing%20lure%20silver%20metallic%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Cuillère clignotante": "https://image.pollinations.ai/prompt/flashing%20spoon%20ice%20fishing%20lure%20bright%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Cuillère saumon #5": "https://image.pollinations.ai/prompt/large%20salmon%20spoon%20fishing%20lure%20red%20silver%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Cuillère légère 2-3g": "https://image.pollinations.ai/prompt/small%20light%20fishing%20spoon%20lure%203%20gram%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Poisson nageur Rapala": "https://image.pollinations.ai/prompt/rapala%20minnow%20crankbait%20fishing%20lure%20blue%20silver%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Poisson nageur 15cm": "https://image.pollinations.ai/prompt/large%20jointed%20minnow%20hard%20bait%20fishing%20lure%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Topwater (Popper)": "https://image.pollinations.ai/prompt/topwater%20popper%20fishing%20lure%20surface%20plug%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Crankbait": "https://image.pollinations.ai/prompt/crankbait%20diving%20hard%20fishing%20lure%20shad%20pattern%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Glide bait (Dawg)": "https://image.pollinations.ai/prompt/large%20glide%20bait%20musky%20fishing%20lure%20jointed%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Gros poisson nageur": "https://image.pollinations.ai/prompt/large%20swimbait%20hard%20fishing%20lure%20pike%20muskie%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Jerkbait XXL": "https://image.pollinations.ai/prompt/large%20jerkbait%20hard%20fishing%20lure%20suspending%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Devon minnow": "https://image.pollinations.ai/prompt/devon%20minnow%20spinning%20fishing%20lure%20classic%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Petit popper": "https://image.pollinations.ai/prompt/small%20topwater%20popper%20fishing%20lure%20yellow%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Leurre souple shad": "https://image.pollinations.ai/prompt/soft%20plastic%20shad%20swimbait%20fishing%20lure%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Swimbait": "https://image.pollinations.ai/prompt/soft%20plastic%20swimbait%20paddle%20tail%20fishing%20lure%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Worm texan 7\"": "https://image.pollinations.ai/prompt/texas%20rigged%20plastic%20worm%20fishing%20lure%20dark%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Spinnerbait": "https://image.pollinations.ai/prompt/spinnerbait%20fishing%20lure%20white%20skirt%20blade%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Spinner Mepps #3": "https://image.pollinations.ai/prompt/mepps%20aglia%20spinner%20fishing%20lure%20silver%20blade%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Mouche sèche": "https://image.pollinations.ai/prompt/dry%20fly%20fishing%20artificial%20fly%20hook%20feathers%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Mouche sèche (elk hair)": "https://image.pollinations.ai/prompt/elk%20hair%20caddis%20dry%20fly%20fishing%20tie%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Nymphe (pheasant)": "https://image.pollinations.ai/prompt/pheasant%20tail%20nymph%20fly%20fishing%20artificial%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Nymphe beadhead": "https://image.pollinations.ai/prompt/beadhead%20nymph%20fly%20fishing%20gold%20bead%20hook%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Nymphe de fond": "https://image.pollinations.ai/prompt/bottom%20nymph%20wet%20fly%20fishing%20artificial%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Mouche noyée Butterfly": "https://image.pollinations.ai/prompt/butterfly%20wet%20fly%20salmon%20fishing%20artificial%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Spey fly (Intruder)": "https://image.pollinations.ai/prompt/intruder%20spey%20fly%20salmon%20fishing%20large%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Grand bucktail 8\"+": "https://image.pollinations.ai/prompt/large%20bucktail%20streamer%20musky%20fishing%20fly%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Ver de terre": "https://image.pollinations.ai/prompt/earthworm%20natural%20fishing%20bait%20hook%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Ver de terre naturel": "https://image.pollinations.ai/prompt/earthworm%20nightcrawler%20natural%20fishing%20bait%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Ver de terre (petit)": "https://image.pollinations.ai/prompt/small%20earthworm%20piece%20fishing%20hook%20bait%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Ver de terre (gros)": "https://image.pollinations.ai/prompt/large%20nightcrawler%20earthworm%20fishing%20bait%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Ver de vase": "https://image.pollinations.ai/prompt/bloodworm%20midge%20larva%20fishing%20bait%20red%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Vif (crapet/perche)": "https://image.pollinations.ai/prompt/live%20small%20fish%20baitfish%20hook%20fishing%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Minnow vivant": "https://image.pollinations.ai/prompt/live%20minnow%20baitfish%20small%20perch%20fishing%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Œufs de saumon (roe)": "https://image.pollinations.ai/prompt/salmon%20roe%20eggs%20orange%20natural%20fishing%20bait%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Asticot en grappe": "https://image.pollinations.ai/prompt/cluster%20maggots%20fishing%20bait%20hook%20white%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Foie de poulet": "https://image.pollinations.ai/prompt/chicken%20liver%20natural%20fishing%20bait%20catfish%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Boilette maison": "https://image.pollinations.ai/prompt/homemade%20boilie%20fishing%20bait%20ball%20carp%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
+  "Libellule artificielle": "https://image.pollinations.ai/prompt/artificial%20dragonfly%20fishing%20lure%20surface%2C%20fishing%20lure%20bait%2C%20white%20background%2C%20product%20photo%2C%20sharp%20focus%2C%20realistic?width=200&height=200&nologo=true&seed=42",
 };
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1378,7 +1377,8 @@ function ColorSwatch({color}) {
 
 function BaitCard({bait, rank, fishColor}) {
   const photo = BAIT_PHOTOS[bait.name];
-  const [imgErr, setImgErr] = useState(false);
+  const [imgErr,     setImgErr]     = useState(false);
+  const [imgLoaded,  setImgLoaded]  = useState(false);
   const colorRec = bait.colorRec;
   return (
     <div style={{borderRadius:"11px",overflow:"hidden",
@@ -1386,15 +1386,30 @@ function BaitCard({bait, rank, fishColor}) {
       border:rank===0?`1px solid ${fishColor}44`:"1px solid rgba(255,255,255,0.05)"}}>
       {/* Ligne principale */}
       <div style={{display:"flex",alignItems:"flex-start",gap:"9px",padding:"9px 10px"}}>
-        {/* Photo appât */}
-        <div style={{width:44,height:44,borderRadius:"9px",overflow:"hidden",flexShrink:0,
-          background:"rgba(255,255,255,0.08)"}}>
-          {photo&&!imgErr
-            ? <img src={photo} alt={bait.name} onError={()=>setImgErr(true)}
-                style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-            : <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",
-                justifyContent:"center",fontSize:"20px"}}>🪱</div>
-          }
+        {/* Photo appât générée par IA */}
+        <div style={{width:52,height:52,borderRadius:"10px",overflow:"hidden",flexShrink:0,
+          background:"rgba(255,255,255,0.06)",position:"relative"}}>
+          {photo&&!imgErr ? (
+            <>
+              {/* Skeleton animé pendant le chargement */}
+              {!imgLoaded && (
+                <div style={{position:"absolute",inset:0,
+                  background:"linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%)",
+                  backgroundSize:"200% 100%",animation:"shimmer 1.5s infinite",
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:"18px"}}>
+                  🎣
+                </div>
+              )}
+              <img src={photo} alt={bait.name}
+                onLoad={()=>setImgLoaded(true)}
+                onError={()=>setImgErr(true)}
+                style={{width:"100%",height:"100%",objectFit:"cover",
+                  opacity:imgLoaded?1:0,transition:"opacity .3s"}}/>
+            </>
+          ) : (
+            <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",
+              justifyContent:"center",fontSize:"22px"}}>🪱</div>
+          )}
         </div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"5px"}}>
@@ -1921,6 +1936,7 @@ export default function BestBaitApp() {
         @keyframes waterflow{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
         @keyframes progress{from{width:0%;}to{width:100%;}}
         @keyframes fadeSlide{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+        @keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
       `}</style>
       <div style={{minHeight:"100vh",background:"#05091a",fontFamily:"'DM Sans',sans-serif",color:"#e0eaff",
         maxWidth:"430px",margin:"0 auto",
