@@ -430,13 +430,76 @@ async function fetchWeather(lat, lon) {
   };
 }
 
+// Normalise une chaîne : minuscules + supprime accents
+function normalize(str) {
+  return str.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+// Mots-clés de plans d'eau (sans accents pour la comparaison)
+const WATER_KEYWORDS = [
+  "lac","lake","riviere","river","fleuve","canal","etang","pond",
+  "ruisseau","creek","brook","marais","marsh","baie","bay","tourbiere",
+];
+
+function looksLikeWaterBody(query) {
+  const q = normalize(query);
+  return WATER_KEYWORDS.some(kw =>
+    q.startsWith(kw + " ") || q.startsWith(kw + "-") ||
+    q === kw ||
+    q.includes(" " + kw) || q.includes("-" + kw)
+  );
+}
+
+// Détermine le type BestBait depuis les champs class/type Nominatim
+function nominatimToWaterType(cls, type) {
+  if (cls === "waterway" || type === "river" || type === "riverbank") return "fleuve";
+  if (type === "canal")                                               return "canal";
+  if (type === "stream" || type === "drain")                          return "ruisseau";
+  if (type === "lake")                                                return "lac";
+  if (type === "water" || cls === "natural")                          return "lac"; // défaut natural
+  if (type === "pond")                                                return "étang";
+  if (type === "wetland" || type === "marsh" || type === "bog")       return "marais";
+  if (type === "bay" || type === "harbour")                           return "port";
+  return null;
+}
+
 async function geocodeAddress(query) {
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query+" Québec Canada")}&format=json&limit=3&accept-language=fr`;
+  const isWater = looksLikeWaterBody(query);
+  // limit=10 pour avoir plus de chances de trouver le bon résultat
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query+" Québec Canada")}&format=json&limit=10&accept-language=fr&addressdetails=1`;
   const r = await fetch(url, {headers:{"User-Agent":"BestBait/1.0"}});
   if (!r.ok) throw new Error("géocodage échoué");
   const data = await r.json();
   if (!data.length) throw new Error("Lieu introuvable");
-  return {lat:parseFloat(data[0].lat), lon:parseFloat(data[0].lon), displayName:data[0].display_name};
+
+  let best = data[0];
+
+  if (isWater) {
+    // Cherche un résultat qui est un vrai plan d'eau, pas une municipalité/admin
+    const waterResult = data.find(d => {
+      const wt = nominatimToWaterType(d.class, d.type);
+      return wt !== null;
+    });
+    if (waterResult) best = waterResult;
+    // Sinon on garde data[0] (meilleur résultat Nominatim) et on laissera
+    // Overpass chercher autour des coordonnées
+  }
+
+  const waterType = nominatimToWaterType(best.class, best.type);
+  return {
+    lat: parseFloat(best.lat),
+    lon: parseFloat(best.lon),
+    displayName: best.display_name,
+    isWaterResult: waterType !== null,
+    waterType,
+    osmName: best.display_name.split(",")[0].trim(),
+  };
+}
+
+// Construit un objet plan d'eau depuis un résultat Nominatim direct
+function waterBodyFromNominatim(geo) {
+  if (!geo.waterType) return null;
+  return { name: geo.osmName, type: geo.waterType, dist: "0.0" };
 }
 
 async function fetchNearestWaterBody(lat, lon) {
@@ -508,7 +571,15 @@ async function fetchNearestWaterBody(lat, lon) {
       return { name, type, score, dist: dist.toFixed(1) };
     });
 
+    // Pour les ways linéaires (rivières, canaux), le "center" peut être loin
+    // On pénalise les éléments sans center (impossible à localiser)
     scored.sort((a,b) => b.score - a.score);
+    // Filtrer les résultats aberrants : si le meilleur est à >5km et qu'il y en a un à <2km, prendre le plus proche
+    const veryClose = scored.filter(s => parseFloat(s.dist) < 2);
+    if (veryClose.length > 0 && parseFloat(scored[0].dist) > 5) {
+      veryClose.sort((a,b) => b.score - a.score);
+      return veryClose[0];
+    }
     return scored[0] ?? null;
   } catch { return null; }
 }
@@ -1020,7 +1091,32 @@ function SearchPage({onResults}) {
       const geo = await geocodeAddress(addressInput);
       setCoords({lat:geo.lat,lon:geo.lon}); setAddrState("done");
       setResolvedName(geo.displayName.split(",").slice(0,2).join(",").trim());
-      await loadAll(geo.lat,geo.lon);
+
+      // Si Nominatim a trouvé directement le plan d'eau (ex: "Lac Supérieur"),
+      // on l'utilise directement sans re-chercher autour des coordonnées
+      const directWater = geo.isWaterResult ? waterBodyFromNominatim(geo) : null;
+
+      if (directWater) {
+        // Plan d'eau trouvé directement — pas besoin d'Overpass pour le type
+        setNearestWater(directWater);
+        setWaterState("done");
+        const profile = WATER_PROFILES[directWater.type];
+        setHabitat(prev => prev ?? directWater.type);
+        if (profile) {
+          setCurrent(prev  => prev ?? profile.current);
+          setDepth(prev    => prev ?? profile.depth);
+          setVegetation(prev => prev.length > 0 ? prev : profile.vegetation);
+        }
+        // Météo seulement
+        setWeatherState("loading");
+        try {
+          const wtr = await fetchWeather(geo.lat, geo.lon);
+          setWeather(wtr); setWeatherState("done");
+        } catch { setWeatherState("error"); }
+      } else {
+        // Adresse générique — chercher le plan d'eau le plus proche via Overpass
+        await loadAll(geo.lat, geo.lon);
+      }
     } catch { setAddrState("error"); }
   }
 
